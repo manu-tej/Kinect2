@@ -6,7 +6,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 import matplotlib.image
 
 class CichlidTracker:
-    def __init__(self):
+    def __init__(self, cloudMasterDirectory):
+
+        # 0: Store data
+        self.cloudMasterDirectory = cloudMasterDirectory
+        
         # 1: Define valid commands and ignore warnings
         self.commands = ['New', 'Restart', 'Stop', 'Rewrite', 'UploadData', 'LocalDelete', 'Snapshots']
         np.seterr(invalid='ignore')
@@ -25,7 +29,7 @@ class CichlidTracker:
         # 3: Determine which Kinect is attached (This script can handle v1 or v2 Kinects
         self._identifyDevice() #Stored in self.device
         
-        # 4: Determine master directory (Identify the external hard drive where data should be stored)
+        # 4: Determine master local directory (Identify the external hard drive where data should be stored)
         self._identifyMasterDirectory() # Stored in self.masterDirectory
 
         # 5: Identify credential files (Credential files for uploading updates to Google Drive are found here)
@@ -643,8 +647,8 @@ class CichlidTracker:
         self._modifyPiGS(status = 'DropboxUpload')    
 
         #        subprocess.call(['python3', '/home/pi/Kinect2/Modules/UploadData.py', self.projectDirectory, self.projectID])
-        print(['rclone', 'copy', self.projectDirectory, 'remote:' + 'McGrath/Apps/CichlidPiData/' + self.projectID + '/'])
-        subprocess.call(['rclone', 'copy', self.projectDirectory, 'remote:' + 'McGrath/Apps/CichlidPiData/' + self.projectID + '/'])
+        print(['rclone', 'copy', self.projectDirectory, self.cloudMasterDirectory + self.projectID + '/'])
+        subprocess.call(['rclone', 'copy', self.projectDirectory, self.cloudMasterDirectory + self.projectID + '/'])
         
         try:
             """
@@ -653,7 +657,7 @@ class CichlidTracker:
             check fails, the program returns non-zero exit status and the error is stored
             in CalledProcessError class of the subprocess module.
             """
-            subprocess.run(['rclone', 'check', self.projectDirectory, 'remote:' + 'McGrath/Apps/CichlidPiData/' + self.projectID + '/'], check=True)
+            subprocess.run(['rclone', 'check', self.projectDirectory, self.cloudMasterDirectory + self.projectID + '/'], check=True)
             self._modifyPiGS(status = 'UploadSuccessful, ready for delete')
         except subprocess.CalledProcessError:
             self._modifyPiGS(status = 'UploadFailed, Need to rerun')

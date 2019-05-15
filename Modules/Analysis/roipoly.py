@@ -13,6 +13,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.path as mplPath
+from scipy import ndimage
 
 class roipoly:
 
@@ -59,14 +60,28 @@ class roipoly:
         ROIpath = mplPath.Path(poly_verts)
         grid = ROIpath.contains_points(points).reshape((ny,nx))
         return grid
-      
-    def displayROI(self,**linekwargs):
+
+    def getEdges(self, currentImage):
+        mask = self.getMask(currentImage)
+        struct = ndimage.generate_binary_structure(2, 2)
+        erode = ndimage.binary_erosion(mask, struct)
+        edges = mask ^ erode
+        return edges
+    
+    def displayROI(self, ax = None, **linekwargs):
+        #height, width = currentImage.shape
+        #for i in nx:
+        #    for j in ny:
+        #        tx = []
+        #        for x in self.allxpoints:
+        #            tx.append(x - dx
         l = plt.Line2D(self.allxpoints +
                      [self.allxpoints[0]],
                      self.allypoints +
                      [self.allypoints[0]],
                      color=self.roicolor, **linekwargs)
-        ax = plt.gca()
+        if ax is None:
+            ax = plt.gca()
         ax.add_line(l)
         plt.draw()
 
